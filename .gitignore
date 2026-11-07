@@ -6,3 +6,4 @@ dist/
 *.tsbuildinfo
 .openai/
 mobile-preview.html
+supabase/.temp/

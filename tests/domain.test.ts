@@ -1,0 +1,14 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {validCpf,validCar,number,pending,businessDays,validateProperty,validateField,stocking} from '../src/lib/domain';
+import {seed} from '../src/lib/seed';
+import {classify,suggestions} from '../src/lib/files';
+test('CPF rejects repeated digits and incorrect check digits',()=>{assert.equal(validCpf('111.111.111-11'),false);assert.equal(validCpf('529.982.247-25'),true);assert.equal(validCpf('529.982.247-26'),false)});
+test('CAR requires state, municipality and 32 hexadecimal characters',()=>{assert.ok(validCar('AC-1200401-'+'A'.repeat(32)));assert.equal(validCar('AC-1200401-123'),false)});
+test('Brazilian decimal areas are interpreted correctly',()=>{assert.equal(number('1.250,75'),1250.75);assert.equal(number('125.5'),125.5)});
+test('A producer without a property receives a blocking task',()=>{const db=seed();const list=pending(db.customers[0],[],db.rules);assert.equal(list.filter(p=>p.field==='property').length,1);assert.equal(list.find(p=>p.field==='property')?.severity,'blocking')});
+test('CAF rule is restricted to Pronaf',()=>{const db=seed();const c={...db.customers[0],caf:''};assert.ok(pending(c,db.properties.slice(0,1),db.rules).some(p=>p.field==='caf'));assert.equal(pending({...c,classification:'pronamp'},db.properties.slice(0,1),db.rules).some(p=>p.field==='caf'),false)});
+test('Business deadline excludes weekends and configured holidays',()=>{assert.equal(businessDays('2026-11-06','2026-11-10'),2);assert.equal(businessDays('2026-11-06','2026-11-10',['2026-11-09']),1)});
+test('Review rejects area conflicts that violate the property totals',()=>{const db=seed();assert.match(validateProperty({...db.properties[0],area:10,consolidated:20}),/consolidada/);assert.match(validateField('cpf','00000000000'),/inválido/)});
+test('Stocking alert compares animal units with consolidated land',()=>{const db=seed();const result=stocking([db.properties[2]],[db.herds[2]],db.settings[0]);assert.equal(result.rate,4.5);assert.equal(result.blocked,true)});
+test('Document parsing retains source page and requires review',()=>{const text='[Página 1] CCIR [Página 2] Área total (ha): 128,00';assert.equal(classify(text),'ccir');const area=suggestions('ccir',text).find(s=>s.key==='area')!;assert.equal(area.value,'128,00');assert.equal(area.page,2);assert.equal(area.confidence,null)});

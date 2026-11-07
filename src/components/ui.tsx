@@ -1,0 +1,14 @@
+import type {ReactNode} from 'react';
+import {ArrowUpRight,ChevronRight,FileSearch,Loader2,Plus} from 'lucide-react';
+export function Button({children,onClick,variant='',disabled=false,type='button',className=''}:{children:ReactNode;onClick?:()=>void;variant?:string;disabled?:boolean;type?:'button'|'submit';className?:string}){return <button type={type} disabled={disabled} className={`btn ${variant} ${className}`} onClick={onClick}>{children}</button>}
+export function PageHeader({eyebrow,title,subtitle,children}:{eyebrow?:string;title:string;subtitle:string;children?:ReactNode}){return <div className="page-heading"><div>{eyebrow&&<div className="eyebrow">{eyebrow}</div>}<h1>{title}</h1><p>{subtitle}</p></div><div className="heading-actions">{children}</div></div>}
+export function Badge({children,tone='neutral'}:{children:ReactNode;tone?:string}){return <span className={`badge ${tone}`}><i/>{children}</span>}
+export function Empty({title='Tudo organizado por aqui',text,action}:{title?:string;text:string;action?:ReactNode}){return <div className="empty"><span className="empty-icon"><FileSearch size={27}/></span><h3>{title}</h3><p>{text}</p>{action}</div>}
+export function SectionTitle({title,meta,action,onClick}:{title:string;meta?:string;action?:string;onClick?:()=>void}){return <div className="section-title"><div><h2>{title}</h2>{meta&&<p>{meta}</p>}</div>{action&&<button className="text-btn" onClick={onClick}>{action}<ArrowUpRight size={15}/></button>}</div>}
+export function Field({label,children,hint,wide=false}:{label:string;children:ReactNode;hint?:string;wide?:boolean}){return <label className={`field ${wide?'wide':''}`}><span>{label}</span>{children}{hint&&<small>{hint}</small>}</label>}
+export function Loading(){return <div className="loading"><Loader2 className="spin" size={24}/> Carregando seu espaço…</div>}
+export function Avatar({name,small=false}:{name:string;small?:boolean}){return <span className={`avatar ${small?'small':''}`}>{name.split(' ').map(w=>w[0]).slice(0,2).join('')}</span>}
+export function Add({children,onClick}:{children:ReactNode;onClick:()=>void}){return <Button onClick={onClick}><Plus size={16}/>{children}</Button>}
+export function RowLink({title,description,onClick,icon}:{title:string;description:string;onClick:()=>void;icon?:ReactNode}){return <button className="row-link" onClick={onClick}>{icon&&<span className="row-icon">{icon}</span>}<span><strong>{title}</strong><small>{description}</small></span><ChevronRight size={17}/></button>}
+export function download(name:string,content:string,type='text/plain'){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+export function csvValue(v:unknown){let s=String(v??'');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}

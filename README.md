@@ -17,7 +17,13 @@ A demonstração é acessada explicitamente pela tela de entrada ou por `?previe
 
 ## Situação da implantação
 
-A interface e a base de produção estão implementadas. A ativação depende de concluir a criação do projeto dedicado no Supabase, aplicar a migração, configurar autenticação e publicar com as variáveis do projeto. **Sem isso, o ambiente não deve receber dados reais.** A suíte de banco executa a migração em PostgreSQL local via PGlite; não substitui o teste final do Supabase online.
+A interface está publicada em https://delta-1.github.io/AGROGEST/ e conectada ao projeto Supabase dedicado `oadyjxanjroyfriythcz`, na organização AGROGEST (Free, São Paulo). As migrações foram aplicadas, as variáveis do Pages foram configuradas e os endereços de retorno da autenticação apontam para a aplicação.
+
+As 13 tabelas públicas estão com RLS e o bucket de documentos é privado. Foram validados no servidor cadastro, imóvel, revisão, convite e isolamento de técnico/conta externa com registros temporários revertidos por transação. Os Advisors de segurança e desempenho ficaram com zero erros e zero avisos. Os 20 testes automatizados passaram.
+
+**Pendente antes de liberar a equipe:** configurar SMTP próprio para confirmações e recuperação de senha. O SMTP padrão do Supabase só envia para os e-mails dos integrantes da organização e tem limites de teste: https://supabase.com/docs/guides/auth/auth-smtp. A confirmação de e-mail continua habilitada. O primeiro acesso real, o envio de e-mail e o upload autenticado no ambiente online ainda precisam da primeira conta do usuário; os testes de arquivos e revisão transacional já passam no PostgreSQL local.
+
+Criar a primeira conta pelo botão **Primeiro acesso? Criar conta**, confirmar o e-mail e criar o escritório. Definir e validar a rotina de backup antes de registrar documentos reais da equipe.
 
 O login administrativo do painel Supabase é independente dos usuários do aplicativo.
 
@@ -35,7 +41,7 @@ React 19, TypeScript e Vite. Mapas, leitura de PDF e geradores de documentos sã
 ## Implantação no Supabase dedicado
 
 1. Criar o projeto AGROGEST na organização AGROGEST, região São Paulo. Nunca aplicar a migração em projetos de outros sistemas.
-2. Executar `supabase/migrations/20261107201827_initial_agrogest_production.sql` no SQL Editor do projeto. O arquivo cria tabelas com RLS, políticas, índices, funções transacionais e um bucket privado de 20 MB por arquivo.
+2. Executar os arquivos de `supabase/migrations/` em ordem de nome, uma única vez, em um projeto novo. A migração inicial cria tabelas com RLS, políticas, índices, funções transacionais e um bucket privado de 20 MB por arquivo. A seguinte restringe a função administrativa padrão do Supabase e otimiza a leitura do JWT nas políticas de convites. No projeto acima ambas já foram aplicadas; não executar novamente a inicial.
 3. Em Auth, configurar o Site URL e as URLs de redirecionamento com a URL pública exata, incluindo `/AGROGEST/`. Manter confirmação de e-mail habilitada. Configurar SMTP próprio para o volume de uso da equipe.
 4. Definir no repositório, em Actions Variables: `AGROGEST_BACKEND_ENABLED=true`, `AGROGEST_SUPABASE_URL` e `AGROGEST_SUPABASE_PUBLISHABLE_KEY`. Usar a chave publicável; nunca service_role, secret key, senha do banco ou access token no frontend.
 5. Publicar pelo workflow. Criar a primeira conta, confirmar e-mail e criar o escritório. A operação é transacional e não importa nenhum dado de demonstração.

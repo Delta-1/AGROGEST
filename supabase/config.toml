@@ -1,0 +1,4 @@
+project_id = "AGROGEST"
+[functions.agrogest-staff]
+# The handler verifies the caller with auth.getUser and checks active RH/admin membership.
+verify_jwt = false

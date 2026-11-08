@@ -1,33 +1,61 @@
-# AGROGEST Assessoria
+# AGROGEST Assessoria · Site e Hub
 
-Sistema web para o escritório rural da AGROGEST. Navegação horizontal no topo, identidade azul e verde, versão para computador e celular.
+Site público da empresa e portal exclusivo da equipe, com navegação horizontal no topo. React 19, TypeScript, Vite e Supabase. Publicação pelo GitHub Pages:
 
-## Primeira versão funcional
+https://delta-1.github.io/AGROGEST/
 
-- Login, cadastro, confirmação por e-mail, recuperação e alteração de senha.
-- Escritórios separados, integrantes e perfis administrador, gestor e técnico.
-- Cadastro e edição de produtores, imóveis e rebanhos, busca e pendências.
-- PDFs e imagens em armazenamento privado; conferência lado a lado e registro da origem.
-- Quadro Kanban e lista de processos, prazos, justificativas e histórico.
-- Agenda, demandas, certidões com validade e minutas em PDF/DOCX.
-- Regras do escritório, calendário, exportação e histórico de alterações.
-- Dados reais gravados no servidor; revisões impedem sobrescrever alterações concorrentes.
+## Site público
 
-A demonstração é acessada explicitamente pela tela de entrada ou por `?preview=1`. Ela usa exemplos fictícios salvos no navegador e não grava no servidor. Reinicie em **Gestão → Configurações → Dados**.
+A página inicial apresenta a Agrogest, serviços e equipe, com imagem de destaque ampliável e botão **Acessar Hub** no canto superior direito. O administrador edita a apresentação, biografia, contato, imagem, galeria e vídeo em **Gestão → Site da empresa**. São aceitos vídeos do YouTube ou arquivos MP4/WebM. Sem vídeo configurado, o bloco de vídeo fica oculto.
 
-## Situação da implantação
+O formulário público envia solicitações para **Contatos → Solicitações do site**, visíveis somente ao RH/gestores e administradores. A API valida campos, limita repetição por contato e não permite consultar mensagens anonimamente. Os botões de WhatsApp, telefone e e-mail aparecem quando o administrador configura os canais comerciais. Nenhum telefone, endereço ou e-mail pessoal foi inventado ou publicado. A paisagem inicial é ilustrativa; a empresa pode substituí-la por imagens próprias.
 
-A interface está publicada em https://delta-1.github.io/AGROGEST/ e conectada ao projeto Supabase dedicado `oadyjxanjroyfriythcz`, na organização AGROGEST (Free, São Paulo). As migrações foram aplicadas, as variáveis do Pages foram configuradas e os endereços de retorno da autenticação apontam para a aplicação.
+A logo utilizada é PNG com transparência. Mídias do site são explicitamente públicas, em um bucket separado dos documentos privados.
 
-As 13 tabelas públicas estão com RLS e o bucket de documentos é privado. Foram validados no servidor cadastro, imóvel, revisão, convite e isolamento de técnico/conta externa com registros temporários revertidos por transação. Os Advisors de segurança e desempenho ficaram com zero erros e zero avisos. Os 20 testes automatizados passaram.
+## Acesso da equipe
 
-**Pendente antes de liberar a equipe:** configurar SMTP próprio para confirmações e recuperação de senha. O SMTP padrão do Supabase só envia para os e-mails dos integrantes da organização e tem limites de teste: https://supabase.com/docs/guides/auth/auth-smtp. A confirmação de e-mail continua habilitada. O primeiro acesso real, o envio de e-mail e o upload autenticado no ambiente online ainda precisam da primeira conta do usuário; os testes de arquivos e revisão transacional já passam no PostgreSQL local.
+O Hub atende somente a AGROGEST. Não há autocadastro, criação de escritórios pelo visitante ou necessidade de criar um e-mail. A pessoa entra com **login e senha** fornecidos pela empresa.
 
-Criar a primeira conta pelo botão **Primeiro acesso? Criar conta**, confirmar o e-mail e criar o escritório. Definir e validar a rotina de backup antes de registrar documentos reais da equipe.
+- **Administrador:** gerencia o Hub, site, acessos e permissões.
+- **RH / Gestor:** cria logins de técnicos, redefine senhas, desativa/reativa esses acessos e acompanha o trabalho da empresa.
+- **Técnico:** acessa a carteira atribuída, documentos autorizados e os seus contatos/atividades.
 
-O login administrativo do painel Supabase é independente dos usuários do aplicativo.
+A administração usa a Edge Function `agrogest-staff`, que verifica o usuário via `auth.getUser()` e consulta o vínculo ativo e o perfil. A chave privilegiada fica somente no servidor. O acesso não depende de `user_metadata`. Cada login usa um identificador de autenticação interno, `login@acesso.agrogest.invalid`; isso não cria uma caixa de e-mail e não é um canal para envio de mensagens.
 
-## Desenvolvimento
+As senhas temporárias precisam ter 12 a 128 caracteres. No primeiro acesso ou após redefinição pelo RH, a pessoa deve trocar a senha. O banco bloqueia o acesso aos dados até a troca; a liberação verifica a mudança real do hash da senha, sem expor o hash ao cliente. Inativar um integrante bloqueia os dados inclusive para tokens já emitidos. O último administrador não pode ser desativado.
+
+### Administrador inicial
+
+Somente um administrador inicial é preparado. Não existem senhas padrão ou credenciais no repositório. Para concluir a ativação no projeto dedicado:
+
+1. Manter **Authentication → Sign In / Providers → Allow new users to sign up** desabilitado.
+2. Em **Authentication → Users → Add user → Create new user**, usar o identificador interno `admin@acesso.agrogest.invalid`.
+3. O proprietário define pessoalmente uma senha forte, mantém **Auto Confirm User** ativado e cria o usuário.
+4. O gatilho do banco configura a empresa AGROGEST, o perfil administrador e as regras iniciais, sem importar exemplos.
+5. Entrar pelo site em **Acessar Hub**, login `admin`, com a senha escolhida.
+6. Em **Equipe e logins**, criar o acesso do RH e os demais logins quando necessário.
+
+SMTP não é necessário para este fluxo de logins internos. A recuperação é feita pelo RH/administrador. Não habilitar envio de mensagens para os identificadores `.invalid`.
+
+## Módulos do Hub
+
+Produtores, contatos, imóveis rurais, rebanho, documentação privada, conferência de dados, processos Kanban, agenda, certidões com validade, minutas PDF/DOCX, regras e histórico. Revisões de registros impedem sobrescrever alterações concorrentes. Conferências atualizam produtor, imóvel e documento em uma transação. A auditoria dos dados é gerada pelo banco.
+
+Documentos privados aceitam até 20 MB por arquivo e são lidos por autorização e links assinados. Mídias públicas do site aceitam PNG/JPG/WebP/MP4/WebM, até 40 MB. Enviar mídia e publicar o conteúdo são etapas distintas. Retirar uma imagem da galeria remove sua exibição, preservando o arquivo enviado.
+
+A demonstração explícita usa `?preview=1` e dados fictícios do navegador. Ela não cria logins nem publica o site. A produção começa vazia.
+
+## Implantação
+
+Projeto Supabase dedicado `oadyjxanjroyfriythcz`, organização AGROGEST (Free, São Paulo). Nunca aplicar as migrações em outros sistemas.
+
+- Executar os arquivos de `supabase/migrations/` em ordem em um projeto novo. No projeto acima eles já foram aplicados; não repetir a migração inicial.
+- Publicar `supabase/functions/agrogest-staff/index.ts`. `verify_jwt=false` é intencional: o código verifica o token com `auth.getUser` e exige vínculo ativo de RH/admin. O validador legado não aceita todas as chaves modernas.
+- Manter Site URL e redirecionamento em `https://delta-1.github.io/AGROGEST/`.
+- Actions Variables: `AGROGEST_BACKEND_ENABLED=true`, `AGROGEST_SUPABASE_URL`, `AGROGEST_SUPABASE_PUBLISHABLE_KEY`. Nunca publicar service_role, secret key, senha do banco ou access token no frontend.
+- Configurar backup/restauração e validar a primeira conta e um upload autenticado antes de registrar os documentos reais da equipe.
+
+## Desenvolvimento e verificação
 
 ```bash
 npm ci
@@ -36,30 +64,10 @@ npm test
 npm run build
 ```
 
-React 19, TypeScript e Vite. Mapas, leitura de PDF e geradores de documentos são carregados sob demanda. O aplicativo precisa de HTTPS para receber arquivos e calcular o hash.
+A suíte possui 31 testes. Os testes das migrações iniciais preservam a verificação das regras históricas; os testes do Hub executam todas as migrações e validam administrador inicial, matrícula fechada, permissões do RH, troca obrigatória de senha, contatos privados, site público e formulário protegido. O build verifica TypeScript e gera os arquivos estáticos.
 
-## Implantação no Supabase dedicado
+No servidor, o autocadastro está desabilitado, o conteúdo institucional pode ser lido publicamente e a Edge Function rejeita chamadas sem autenticação. Os Advisors de segurança foram executados após a migração. A validação final do login e upload online depende da senha inicial definida pelo proprietário.
 
-1. Criar o projeto AGROGEST na organização AGROGEST, região São Paulo. Nunca aplicar a migração em projetos de outros sistemas.
-2. Executar os arquivos de `supabase/migrations/` em ordem de nome, uma única vez, em um projeto novo. A migração inicial cria tabelas com RLS, políticas, índices, funções transacionais e um bucket privado de 20 MB por arquivo. A seguinte restringe a função administrativa padrão do Supabase e otimiza a leitura do JWT nas políticas de convites. No projeto acima ambas já foram aplicadas; não executar novamente a inicial.
-3. Em Auth, configurar o Site URL e as URLs de redirecionamento com a URL pública exata, incluindo `/AGROGEST/`. Manter confirmação de e-mail habilitada. Configurar SMTP próprio para o volume de uso da equipe.
-4. Definir no repositório, em Actions Variables: `AGROGEST_BACKEND_ENABLED=true`, `AGROGEST_SUPABASE_URL` e `AGROGEST_SUPABASE_PUBLISHABLE_KEY`. Usar a chave publicável; nunca service_role, secret key, senha do banco ou access token no frontend.
-5. Publicar pelo workflow. Criar a primeira conta, confirmar e-mail e criar o escritório. A operação é transacional e não importa nenhum dado de demonstração.
-6. O administrador libera o e-mail de cada integrante em Equipe. O integrante cria a conta com esse e-mail e entra em até 7 dias. A liberação não envia e-mails automaticamente.
-7. Validar duas contas de empresas distintas, um técnico atribuído, envio e leitura de arquivo privado, mudança de etapa e revisão de documento. Executar os Advisors do Supabase antes de disponibilizar para a equipe. Definir e testar a rotina de backup e restauração.
+## Limites da v1
 
-## Segurança e testes
-
-- RLS verifica empresa e responsável por UUID; nomes e user_metadata não autorizam acesso.
-- Técnicos acessam a carteira atribuída. Gestores e administradores veem o escritório.
-- Arquivos possuem caminhos por empresa e usuário, sem bucket público. Leituras passam por políticas e links assinados de curta duração.
-- Conferências atualizam produtor, imóvel e documento em uma transação; conflito de versão desfaz tudo.
-- Auditoria é escrita por gatilhos do banco e não pode ser criada ou editada pelo cliente.
-- A equipe não consegue desativar o último administrador.
-- `npm test` cobre regras do domínio e cenários de isolamento, convites, arquivos e concorrência em PostgreSQL.
-
-## Limites explícitos da v1
-
-A leitura local extrai alguns padrões de PDFs com texto. Fotos e PDFs digitalizados são conferidos manualmente. Extração por IA, sincronização com Drive, cruzamentos ambientais oficiais, integração com portais bancários e relatórios oficiais serão desenvolvidos como integrações próprias. Os documentos gerados são minutas para revisão e assinatura do responsável técnico.
-
-A demonstração e a produção usam o mesmo layout; somente o modo autenticado conectado ao Supabase oferece persistência compartilhada e controle real de acesso.
+A leitura local extrai padrões de PDFs com texto. Fotos e PDFs digitalizados exigem conferência manual. Extração por IA, sincronização Drive, cruzamentos ambientais oficiais, integração bancária e relatórios oficiais continuam como integrações futuras. Os documentos gerados são minutas para revisão e assinatura do responsável técnico.

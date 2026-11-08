@@ -9,6 +9,7 @@ test('public media links and username inputs cannot become executable URLs',()=>
  assert.equal(loginAddress(' Victor.01 '),'victor.01@acesso.agrogest.invalid');assert.throws(()=>loginAddress('someone@example.com'));assert.throws(()=>loginAddress('a b'));
  assert.equal(mediaUrl('javascript:alert(1)'), '');assert.equal(mediaUrl('data:text/html,hello'),'');assert.equal(videoEmbed('https://evil.example/embed/12345678901'),'');assert.equal(whatsappUrl('123'), '');
  assert.equal(videoEmbed('https://youtu.be/abcdefghijk'),'https://www.youtube-nocookie.com/embed/abcdefghijk');
+ assert.equal(whatsappUrl('(68) 90000-0001'),'https://wa.me/5568900000001');
 });
 test('single-company hub: closed enrollment, staff roles, forced password change, contacts and public inbox',async t=>{
  const db=new PGlite();t.after(()=>db.close());

@@ -3,6 +3,7 @@ import {ArrowRight, Bell, CalendarDays, Check, CheckCheck, ChevronDown, ChevronR
 import {AppContext} from './context';
 import {useWorkspace} from './lib/useWorkspace';
 import {supabase} from './lib/backend';
+import {systemGuide} from './lib/guide';
 import Auth from './components/Auth';
 import Landing from './components/Landing';
 import {Contacts} from './components/Contacts';
@@ -73,5 +74,6 @@ function Modal({title,children,onClose}:{title:string;children:ReactNode;onClose
  useEffect(()=>{const previous=document.activeElement as HTMLElement|null;const d=ref.current;d?.showModal();document.body.style.overflow='hidden';return()=>{document.body.style.overflow='';previous?.focus()}},[]);
  return <dialog ref={ref} className={`modal ${wide?'modal-wide':''}`} onCancel={e=>{e.preventDefault();onClose()}} onClick={e=>{if(e.target===e.currentTarget){const r=ref.current!.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)onClose()}}} aria-labelledby="modal-title"><div className="modal-head"><div><span className="eyebrow">AGROGEST ASSESSORIA</span><h2 id="modal-title">{title}</h2></div><button className="icon-btn" aria-label="Fechar janela" onClick={onClose}><X size={21}/></button></div><div className="modal-body"><ErrorBoundary>{children}</ErrorBoundary></div></dialog>
 }
-function Help(){return <div className="help-content"><span className="help-leaf"><Sprout size={34}/></span><h2>Seu trabalho, em um só lugar.</h2><p>Comece com um produtor e acompanhe o caminho até a entrega.</p><ol>{[['Cadastre o produtor','Organize os dados, o responsável e os imóveis rurais.'],['Receba e confira os documentos','Compare o original com os campos. Você decide o que entra no cadastro.'],['Acompanhe cada etapa','Use os processos e a agenda para manter os prazos visíveis.']].map(([title,text])=><li key={title}><strong>{title}</strong><p>{text}</p></li>)}</ol><div className="notice"><Leaf size={19}/><span>O Hub reúne o trabalho da equipe da Agrogest. O RH cria os acessos e define as responsabilidades.</span></div></div>}
+function Help(){return <div className="help-content"><span className="help-leaf"><Sprout size={34}/></span><h2>Como o Agrogest Hub funciona</h2><p>Do primeiro contato à organização do trabalho da equipe.</p><ol>{systemGuide.map(section=><li key={section.title}><strong>{section.title}</strong><p>{section.text}</p></li>)}</ol><div className="notice"><Leaf size={19}/><span>OCR: até 12 páginas digitalizadas por arquivo e PDFs com até 150 páginas. Use arquivos nítidos e confira os dados antes de aplicar.</span></div></div>}
+
 class ErrorBoundary extends Component<{children:ReactNode},{failed:boolean}>{state={failed:false};static getDerivedStateFromError(){return {failed:true}}render(){return this.state.failed?<Empty title="Não foi possível abrir esta tela" text="Recarregue a página para tentar novamente." action={<Button onClick={()=>window.location.reload()}>Recarregar</Button>}/>:this.props.children}}

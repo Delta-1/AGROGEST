@@ -8,7 +8,7 @@ https://delta-1.github.io/AGROGEST/
 
 A página inicial apresenta a Agrogest, serviços e equipe, com imagem de destaque ampliável e botão **Acessar Hub** no canto superior direito. O administrador edita a apresentação, biografia, contato, imagem, galeria e vídeo em **Gestão → Site da empresa**. São aceitos vídeos do YouTube ou arquivos MP4/WebM. Sem vídeo configurado, o bloco de vídeo fica oculto.
 
-O formulário público envia solicitações para **Contatos → Solicitações do site**, visíveis somente ao RH/gestores e administradores. A API valida campos, limita repetição por contato e não permite consultar mensagens anonimamente. Os botões de WhatsApp, telefone e e-mail aparecem quando o administrador configura os canais comerciais. Nenhum telefone, endereço ou e-mail pessoal foi inventado ou publicado. A paisagem inicial é ilustrativa; a empresa pode substituí-la por imagens próprias.
+O questionário guiado de quatro etapas envia solicitações para **Contatos → Solicitações do site**, visíveis somente ao RH/gestores e administradores. A API valida campos, limita repetição por contato e não permite consultar mensagens anonimamente. Os botões de WhatsApp, telefone e e-mail aparecem quando o administrador configura os canais comerciais. Nenhum telefone, endereço ou e-mail pessoal foi inventado ou publicado. A paisagem inicial é ilustrativa; a empresa pode substituí-la por imagens próprias.
 
 A logo utilizada é PNG com transparência. Mídias do site são explicitamente públicas, em um bucket separado dos documentos privados.
 
@@ -64,10 +64,28 @@ npm test
 npm run build
 ```
 
-A suíte possui 31 testes. Os testes das migrações iniciais preservam a verificação das regras históricas; os testes do Hub executam todas as migrações e validam administrador inicial, matrícula fechada, permissões do RH, troca obrigatória de senha, contatos privados, site público e formulário protegido. O build verifica TypeScript e gera os arquivos estáticos.
+A suíte inclui testes de domínio, questionário e permissões. Os testes das migrações iniciais preservam a verificação das regras históricas; os testes do Hub executam todas as migrações e validam administrador inicial, matrícula fechada, permissões do RH, troca obrigatória de senha, contatos privados, site público e formulário protegido. O build verifica TypeScript e gera os arquivos estáticos.
 
 No servidor, o autocadastro está desabilitado, o conteúdo institucional pode ser lido publicamente e a Edge Function rejeita chamadas sem autenticação. Os Advisors de segurança foram executados após a migração. A validação final do login e upload online depende da senha inicial definida pelo proprietário.
 
 ## Limites da v1
 
-A leitura local extrai padrões de PDFs com texto. Fotos e PDFs digitalizados exigem conferência manual. Extração por IA, sincronização Drive, cruzamentos ambientais oficiais, integração bancária e relatórios oficiais continuam como integrações futuras. Os documentos gerados são minutas para revisão e assinatura do responsável técnico.
+A leitura local extrai padrões de PDFs com texto e usa Tesseract.js 7 para OCR em português de JPG, PNG e PDFs digitalizados. O worker, WASM e modelo são servidos pelo próprio Pages. O conteúdo não é enviado a um serviço de OCR. O limite é de 12 páginas digitalizadas por arquivo e 150 páginas totais por PDF. Falhas preservam o original para conferência manual. Extração por IA, sincronização Drive, cruzamentos ambientais oficiais, integração bancária e relatórios oficiais continuam como integrações futuras. Os documentos gerados são minutas para revisão e assinatura do responsável técnico.
+
+## Guia de uso
+
+Veja [Como usar o Agrogest Hub](docs/COMO_USAR.md), também disponível no botão **Ajuda** dentro do Hub.
+
+## Questionário de atendimento
+
+O visitante escolhe serviço, atividade, situação atual, município/UF e urgência, informa os contatos e revisa antes de enviar. As respostas são serializadas com `schema: agrogest.intake.v1` no campo `site_messages.message`, pelo RPC existente. O inbox do RH/admin apresenta os dados por pergunta e mantém suporte às mensagens antigas em texto. Não cria cadastro de produtor automaticamente.
+
+## OCR local
+
+`src/lib/documentReader.ts` extrai texto nativo com PDF.js e aplica OCR às páginas com menos de 50 caracteres sem espaços. Em PDFs mistos, o limite de 12 vale para as páginas que exigem OCR; o texto das demais continua sendo lido. Falhas e páginas omitidas são indicadas na revisão. Nome e nascimento só são sugeridos quando os rótulos são reconhecidos. Os valores continuam sujeitos à validação e conferência.
+
+`scripts/copy-ocr-assets.mjs` copia os ativos das dependências fixadas para `dist/assets/ocr/` no build. No desenvolvimento, copia para `public/assets/ocr/` (ignorado no Git). Nenhuma chave ou serviço pago é necessário para OCR local.
+
+## Railway
+
+O frontend permanece no Pages e o Supabase mantém Auth, Postgres e arquivos privados. Um serviço dedicado no Railway pode futuramente processar filas de OCR/IA em lote, com validação de JWT, limite de recursos e credenciais apenas no servidor. Não compartilhar o serviço nem o banco de outros sistemas. Nenhum serviço Railway foi provisionado nesta atualização.
